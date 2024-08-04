@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { AppDispatch, RootState } from '../app/store'
 import { fetchMenu } from '../slices/menuSlice'
-import { addItemToOrder, addToOrder, fetchOrders, removeItemFromOrder, removeOrder } from '../slices/orderSlice'
+import { addToOrder, fetchOrders, removeOrder, addItemToOrder } from '../slices/orderSlice'
 import { DishItem } from '../slices/menuSlice'
 
 const Menu: React.FC = () => {
@@ -13,8 +13,10 @@ const Menu: React.FC = () => {
   const menuStatus = useSelector((state: RootState) => state.menu.status)
   const orderItemsDb = useSelector((state: RootState) => state.order.items)
   const orderStatus = useSelector((state: RootState) => state.order.status)
+  const totalPrice = useSelector((state: RootState) => state.order.totalSum)
   const [checkedValue, setcheckedValue] = useState<string[]>([])
 
+console.log("totalPrice", totalPrice)
 
   useEffect(() => {
     console.log("Checking menuStatus:", menuStatus);
@@ -34,10 +36,6 @@ const Menu: React.FC = () => {
     }
   })
 
-  useEffect(() => {
-    console.log("OrderDB", orderItemsDb)
-  }, [orderItemsDb])
-    
     useEffect(() => {
 
         if (checkedValue){
@@ -63,7 +61,6 @@ const Menu: React.FC = () => {
     console.log(checkedValue);
 
   };
-
 
   const handleAddToOrder = (item: DishItem) => {
     console.log("Adding item to order", item)
@@ -151,7 +148,7 @@ const Menu: React.FC = () => {
         
         {/* DIPPSÅS */}
         
-        <article className="bg-primary-300 h-auto p-4 rounded-bl-md rounded-br-md">
+       {/*  <article className="bg-primary-300 h-auto p-4 rounded-bl-md rounded-br-md">
             <div className="flex flex-row justify-between">
                 <h2 className="text-white text-22 font-bold ">DIPSÅS</h2>
                 <h2 className="text-white text-22 font-bold">19 SEK</h2>
@@ -250,7 +247,7 @@ const Menu: React.FC = () => {
                 </label>
 
             </form>
-        </article>
+        </article> */}
         
     </section>    
     </section>

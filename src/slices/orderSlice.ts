@@ -14,12 +14,17 @@ export interface OrderItem {
     items: OrderItem[];
     status: 'idle' | 'loading' | 'succeeded' | 'failed';
     error: string | null;
+    totalQuantity: number,
+    totalSum: number,
+
   }
 
   const initialState: OrderState = {
     items: [],
     status: 'idle',
     error: null,
+    totalQuantity: 0,
+    totalSum: 0,
   };
 
 
@@ -105,42 +110,46 @@ export interface OrderItem {
     name: 'order',
     initialState,
     reducers: {
-        addItemToOrder: (state, action) => {
-            const existingItem = state.items.find(item => item.id === action.payload.id)
-            if(existingItem){
-                existingItem.quantity += 1
-            }else{
-                state.items.push({...action.payload, quantity: 1})
-            }
-            console.log("Item added", action.payload)
-        },
-        removeItemFromOrder: (state, action) => {
-          const existingItem = state.items.find(item => item.id === action.payload.id)
-          if(existingItem){
-            if(existingItem.quantity > 0){
-              existingItem.quantity -= 1
-            }else if(existingItem.quantity === 0){
-              state.items = state.items.filter(item => item.id !== action.payload.id)
-            }
-          }
+      addItemToOrder: (state, action) => {
+        const existingItem = state.items.find(item => item.id === action.payload.id);
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          state.items.push({ ...action.payload, quantity: 1 });
         }
+        // Recalculate totalQuantity and totalSum
+        state.totalQuantity = state.items.reduce((total, item) => total + item.quantity, 0);
+        state.totalSum = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+      },
+      removeItemFromOrder: (state, action) => {
+        const existingItem = state.items.find(item => item.id === action.payload.id);
+        if (existingItem) {
+          if (existingItem.quantity > 1) {
+            existingItem.quantity -= 1;
+          } else {
+            state.items = state.items.filter(item => item.id !== action.payload.id);
+          }
+          // Recalculate totalQuantity and totalSum
+          state.totalQuantity = state.items.reduce((total, item) => total + item.quantity, 0);
+          state.totalSum = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+      }
     },
     extraReducers: (builder) => {
       builder
-        /* FETCH ORDER */
         .addCase(fetchOrders.pending, (state) => {
           state.status = 'loading';
         })
         .addCase(fetchOrders.fulfilled, (state, action) => {
           state.status = 'succeeded';
           state.items = action.payload;
+          state.totalQuantity = action.payload.reduce((total, item) => total + item.quantity, 0);
+          state.totalSum = action.payload.reduce((total, item) => total + (item.price * item.quantity), 0);
         })
         .addCase(fetchOrders.rejected, (state, action) => {
           state.status = 'failed';
           state.error = action.error.message ?? 'Failed to fetch orders';
         })
-    
-        /* ADD ORDER */
         .addCase(addToOrder.pending, (state) => {
           state.status = 'loading';
         })
@@ -152,36 +161,38 @@ export interface OrderItem {
           } else {
             state.items.push(action.payload as OrderItem);
           }
+          // Recalculate totalQuantity and totalSum
+          state.totalQuantity = state.items.reduce((total, item) => total + item.quantity, 0);
+          state.totalSum = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
         })
         .addCase(addToOrder.rejected, (state) => {
           state.status = 'failed';
         })
-    
-        /* REMOVE ORDER */
         .addCase(removeOrder.pending, (state) => {
           state.status = 'loading';
         })
         .addCase(removeOrder.fulfilled, (state, action) => {
           state.status = 'succeeded';
-          const payload = action.payload
-          if(payload){
+          const payload = action.payload;
+          if (payload) {
             const existingItem = state.items.find(item => item.id === payload.id);
             if (existingItem) {
-              if (existingItem.quantity > 0) {
+              if (existingItem.quantity > 1) {
                 existingItem.quantity -= 1;
-              }
-              if (existingItem.quantity === 0) {
+              } else {
                 state.items = state.items.filter(item => item.id !== payload.id);
               }
+              // Recalculate totalQuantity and totalSum
+              state.totalQuantity = state.items.reduce((total, item) => total + item.quantity, 0);
+              state.totalSum = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
             }
           }
-          
         })
         .addCase(removeOrder.rejected, (state) => {
           state.status = 'failed';
         });
     }
-  })
+  });
 
 
   export const {addItemToOrder, removeItemFromOrder} = orderSlice.actions
