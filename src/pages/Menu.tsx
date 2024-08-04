@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { AppDispatch, RootState } from '../app/store'
 import { fetchMenu } from '../slices/menuSlice'
-import { addItemToOrder, addToOrder, fetchOrders } from '../slices/orderSlice'
+import { addItemToOrder, addToOrder, fetchOrders, removeItemFromOrder, removeOrder } from '../slices/orderSlice'
 import { DishItem } from '../slices/menuSlice'
 
 const Menu: React.FC = () => {
@@ -70,6 +70,12 @@ const Menu: React.FC = () => {
     const orderItem = {...item, quantity: 1}
     dispatch(addToOrder(orderItem)); // Spara till Firestore
   }
+  
+  const handleRemoveOrder = (item: DishItem) => {
+    console.log("Removing item to order", item)
+    const orderItem = {...item, quantity: 1}
+    dispatch(removeOrder(orderItem)); // Spara till Firestore
+  }
 
 
 
@@ -104,37 +110,42 @@ const Menu: React.FC = () => {
             <h1 className="text-white text-28 font-bold font-fira-sans">MENY</h1>
         </article>
 
-{menuItems.map((item) =>(
+        {menuItems.map(item => {
+        // Hitta motsvarande orderItem baserat på item.id
+        const orderItem = orderItemsDb.find(order => order.dishname === item.dishname)
 
+        return (
+          <article key={item.id} className="bg-primary-300 h-auto px-4">
+            <div className="flex flex-row justify-between">
+              <h2 className="text-white text-22 font-bold font-fira-sans">{item.dishname.toUpperCase()}</h2>
+              <h2 className="text-white text-22 font-bold font-fira-sans">{item.price} SEK</h2>
+            </div>
 
-     <article key={item.id} className="bg-primary-300 h-auto px-4">
-     <div className="flex flex-row justify-between">
-         <h2 className="text-white text-22 font-bold font-fira-sans">{item.dishname.toUpperCase()}</h2>
-         <h2 className="text-white text-22 font-bold font-fira-sans">{item.price} SEK</h2>
-     </div>
-     
+            <div className='flex flex-row items-end gap-2'>
+              <div
+                className='bg-primary-500 rounded-full w-4 h-4 flex justify-center items-center transition duration-300 ease-in-out transform hover:bg-primary-400 cursor-pointer'
+                onClick={() => handleRemoveOrder(item)}
+              >
+                <i className="fa-solid fa-minus text-white text-[8px]"></i>
+              </div>
 
-     
-     <div className='flex flex-row items-end gap-2'>
-         <div className='bg-primary-500 rounded-full w-4 h-4 flex justify-center items-center transition duration-300 ease-in-out transform hover:bg-primary-400 cursor-pointer'>
-             <i className="fa-solid fa-minus text-white text-[8px]"></i>
-         </div>
-             
-             <p className='text-white text-[12px] mt-2 font-fira-sans'>---</p>
-         
-         <div className='bg-primary-500 rounded-full w-4 h-4 flex justify-center items-center transition duration-300 ease-in-out transform hover:bg-primary-400 cursor-pointer'
-         onClick={() => handleAddToOrder(item)}
-         >
-         <i className="fa-solid fa-plus text-white text-[8px]"></i>
-         </div>
-     </div>
-     
+              <p className='text-white text-[12px] mt-2 font-fira-sans'>
+                {orderItem ? orderItem.quantity : 0}
+              </p>
 
-    
-     <p className="text-white text-14 mt-2 font-fira-sans">{item.description}</p>
-     <div className="border-t-2 border-dotted border-secondary-300 py-2 mt-4"></div>
- </article>
-))}
+              <div
+                className='bg-primary-500 rounded-full w-4 h-4 flex justify-center items-center transition duration-300 ease-in-out transform hover:bg-primary-400 cursor-pointer'
+                onClick={() => handleAddToOrder(item)}
+              >
+                <i className="fa-solid fa-plus text-white text-[8px]"></i>
+              </div>
+            </div>
+
+            <p className="text-white text-14 mt-2 font-fira-sans">{item.description}</p>
+            <div className="border-t-2 border-dotted border-secondary-300 py-2 mt-4"></div>
+          </article>
+        );
+      })}
 
        
         

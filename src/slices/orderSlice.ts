@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import {collection, query, where, getDocs, addDoc, updateDoc, doc} from 'firebase/firestore'
+import {collection, query, where, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import {db} from '../firebase-config'
 
 export interface OrderItem {
@@ -68,6 +68,37 @@ export interface OrderItem {
       }
     }
   );
+  
+  export const removeOrder = createAsyncThunk(
+    'order/removeOrderOrder',
+    async (item: Omit<OrderItem, 'id'>) => {
+      try {
+        const orderCollectionRef = collection(db, 'orders');
+        const q = query(orderCollectionRef, where('dishname', '==', item.dishname));
+        const querySnapshot = await getDocs(q);
+  
+        if (!querySnapshot.empty) {
+          // Varan finns redan, uppdatera kvantiteten -1
+          const existingDoc = querySnapshot.docs[0];
+          const existingData = existingDoc.data() as OrderItem;
+          const newQuantity = existingData.quantity - 1;
+          const docRef = doc(db, 'orders', existingDoc.id);
+          
+          // Kontrollera om kvantiteten är mindre än 1
+          if (newQuantity <= 0) {
+            await deleteDoc(docRef);
+            return { ...existingData, quantity: 0, id: existingDoc.id };
+          } else {
+            await updateDoc(docRef, { quantity: newQuantity });
+            return { ...existingData, quantity: newQuantity, id: existingDoc.id };
+          }
+        }
+      } catch (error) {
+        console.error('Error adding to firestore', error);
+        throw error;
+      }
+    }
+  );
 
 
   const orderSlice = createSlice({
@@ -82,39 +113,76 @@ export interface OrderItem {
                 state.items.push({...action.payload, quantity: 1})
             }
             console.log("Item added", action.payload)
+        },
+        removeItemFromOrder: (state, action) => {
+          const existingItem = state.items.find(item => item.id === action.payload.id)
+          if(existingItem){
+            if(existingItem.quantity > 0){
+              existingItem.quantity -= 1
+            }else if(existingItem.quantity === 0){
+              state.items = state.items.filter(item => item.id !== action.payload.id)
+            }
+          }
         }
     },
     extraReducers: (builder) => {
-        builder
-          .addCase(fetchOrders.pending, (state) => {
-            state.status = 'loading';
-          })
-          .addCase(fetchOrders.fulfilled, (state, action) => {
-            state.status = 'succeeded';
-            state.items = action.payload;
-          })
-          .addCase(fetchOrders.rejected, (state, action) => {
-            state.status = 'failed';
-            state.error = action.error.message ?? 'Failed to fetch orders';
-          })
-          .addCase(addToOrder.pending, (state) => {
-            state.status = 'loading';
-          })
-          .addCase(addToOrder.fulfilled, (state, action) => {
-            state.status = 'succeeded';
-            const existingItem = state.items.find(item => item.id === action.payload.id);
+      builder
+        /* FETCH ORDER */
+        .addCase(fetchOrders.pending, (state) => {
+          state.status = 'loading';
+        })
+        .addCase(fetchOrders.fulfilled, (state, action) => {
+          state.status = 'succeeded';
+          state.items = action.payload;
+        })
+        .addCase(fetchOrders.rejected, (state, action) => {
+          state.status = 'failed';
+          state.error = action.error.message ?? 'Failed to fetch orders';
+        })
+    
+        /* ADD ORDER */
+        .addCase(addToOrder.pending, (state) => {
+          state.status = 'loading';
+        })
+        .addCase(addToOrder.fulfilled, (state, action) => {
+          state.status = 'succeeded';
+          const existingItem = state.items.find(item => item.id === action.payload.id);
+          if (existingItem) {
+            existingItem.quantity = action.payload.quantity;
+          } else {
+            state.items.push(action.payload as OrderItem);
+          }
+        })
+        .addCase(addToOrder.rejected, (state) => {
+          state.status = 'failed';
+        })
+    
+        /* REMOVE ORDER */
+        .addCase(removeOrder.pending, (state) => {
+          state.status = 'loading';
+        })
+        .addCase(removeOrder.fulfilled, (state, action) => {
+          state.status = 'succeeded';
+          const payload = action.payload
+          if(payload){
+            const existingItem = state.items.find(item => item.id === payload.id);
             if (existingItem) {
-              existingItem.quantity = action.payload.quantity;
-            } else {
-              state.items.push(action.payload as OrderItem);
+              if (existingItem.quantity > 0) {
+                existingItem.quantity -= 1;
+              }
+              if (existingItem.quantity === 0) {
+                state.items = state.items.filter(item => item.id !== payload.id);
+              }
             }
-          })
-          .addCase(addToOrder.rejected, (state) => {
-            state.status = 'failed';
-          });
-    },
+          }
+          
+        })
+        .addCase(removeOrder.rejected, (state) => {
+          state.status = 'failed';
+        });
+    }
   })
 
 
-  export const {addItemToOrder} = orderSlice.actions
+  export const {addItemToOrder, removeItemFromOrder} = orderSlice.actions
   export default orderSlice.reducer
