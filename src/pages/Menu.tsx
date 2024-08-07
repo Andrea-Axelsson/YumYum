@@ -102,7 +102,7 @@ console.log("Cart is empty?", cartIsEmpty)
   return (
     <>
     <section 
-    className="bg-primary-100 h-full flex justify-center"
+    className="bg-primary-100 h-auto flex justify-center"
     style={{
         backgroundImage: 'url("/assets/pattern.png")',
         backgroundSize: 'auto',
