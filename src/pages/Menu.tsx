@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { AppDispatch, RootState } from '../app/store'
 import { fetchMenu } from '../slices/menuSlice'
-import { addToOrder, fetchOrders, removeOrder, addItemToOrder } from '../slices/orderSlice'
+import { addToOrder, fetchOrders, removeOrder} from '../slices/orderSlice'
 import { DishItem } from '../slices/menuSlice'
 
 
@@ -50,7 +50,7 @@ console.log("totalPrice", totalPrice)
     }, [checkedValue])
     
 
-    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+/*     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = event.target;
 
         if (checked){
@@ -62,10 +62,9 @@ console.log("totalPrice", totalPrice)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Här kan du hantera vad som ska göras med de valda värdena, t.ex. skicka dem till en server
     console.log(checkedValue);
 
-  };
+  }; */
 
   const handleAddToOrder = (item: DishItem) => {
     console.log("Adding item to order", item)
