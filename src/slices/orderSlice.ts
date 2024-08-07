@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import {collection, query, where, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import {db} from '../firebase-config'
 
@@ -75,7 +75,7 @@ export interface OrderItem {
   );
   
   export const removeOrder = createAsyncThunk(
-    'order/removeOrderOrder',
+    'order/removeOrder',
     async (item: Omit<OrderItem, 'id'>) => {
       try {
         const orderCollectionRef = collection(db, 'orders');
@@ -105,6 +105,38 @@ export interface OrderItem {
     }
   );
 
+  export const deleteOrderFirebase = createAsyncThunk(
+    'order/deleteOrderFirebase',
+    async (itemsToDelete: OrderItem[], { rejectWithValue }) => {
+      try {
+        const orderCollectionRef = collection(db, 'orders');
+        const deletedItems: OrderItem[] = [];
+  
+        // Loop through each item to delete
+        for (const item of itemsToDelete) {
+          const q = query(orderCollectionRef, where('dishname', '==', item.dishname));
+          const querySnapshot = await getDocs(q);
+  
+          if (!querySnapshot.empty) {
+            const existingDoc = querySnapshot.docs[0];
+            const docRef = doc(db, 'orders', existingDoc.id);
+  
+            // Delete the document
+            await deleteDoc(docRef);
+            deletedItems.push({ ...item, id: existingDoc.id });
+          }
+        }
+  
+        return deletedItems;
+      } catch (error) {
+        console.error('Error deleting orders from firestore', error);
+        return rejectWithValue('Failed to delete orders');
+      }
+    }
+  );
+
+
+
 
   const orderSlice = createSlice({
     name: 'order',
@@ -133,10 +165,19 @@ export interface OrderItem {
           state.totalQuantity = state.items.reduce((total, item) => total + item.quantity, 0);
           state.totalSum = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
         }
+      },
+      deleteOrder: (state, action: PayloadAction<OrderItem[]>) => {
+        console.log("SLICE DELETE ORDER")
+        state.items = state.items.filter(item => !action.payload.some(d => d.id === item.id));
+        console.log("SLICE ITEMS", state.items)
+        state.totalQuantity = 0
+        state.totalSum = 0
       }
     },
     extraReducers: (builder) => {
       builder
+
+      /* FETCH  ORDERS */
         .addCase(fetchOrders.pending, (state) => {
           state.status = 'loading';
         })
@@ -150,6 +191,9 @@ export interface OrderItem {
           state.status = 'failed';
           state.error = action.error.message ?? 'Failed to fetch orders';
         })
+
+        /* ADD TO ORDER */
+
         .addCase(addToOrder.pending, (state) => {
           state.status = 'loading';
         })
@@ -168,6 +212,9 @@ export interface OrderItem {
         .addCase(addToOrder.rejected, (state) => {
           state.status = 'failed';
         })
+
+        /* REMOVE ORDER */
+
         .addCase(removeOrder.pending, (state) => {
           state.status = 'loading';
         })
@@ -190,10 +237,28 @@ export interface OrderItem {
         })
         .addCase(removeOrder.rejected, (state) => {
           state.status = 'failed';
+        })
+
+        /* DELETE FULL ORDER */
+
+        .addCase(deleteOrderFirebase.pending, (state) => {
+          console.log("Delete order pending");
+          state.status = 'loading';
+        })
+        .addCase(deleteOrderFirebase.fulfilled, (state, action) => {
+          console.log("Delete order fulfilled");
+          state.status = 'succeeded';
+          state.items = state.items.filter(item => !action.payload.some(d => d.id === item.id));
+          state.totalQuantity = 0
+          state.totalSum = 0
+        })
+        .addCase(deleteOrderFirebase.rejected, (state) => {
+          console.log("Delete order rejected");
+          state.status = 'failed';
         });
     }
   });
 
 
-  export const {addItemToOrder, removeItemFromOrder} = orderSlice.actions
+  export const {addItemToOrder, removeItemFromOrder, deleteOrder} = orderSlice.actions
   export default orderSlice.reducer

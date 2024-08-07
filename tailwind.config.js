@@ -5,6 +5,23 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+
+    animation: {
+      'fade-in': 'fadeIn 0.5s forwards',
+      'fade-out': 'fadeOut 0.5s forwards',
+    },
+    
+    keyframes: {
+      fadeIn: {
+        '0%': { opacity: 0 },
+        '100%': { opacity: 1 },
+      },
+      fadeOut: {
+        '0%': { opacity: 1 },
+        '100%': { opacity: 0 },
+      },
+    },
+
     screens: {
       'sm': '640px', // default
       'md': '768px', // default

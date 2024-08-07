@@ -1,15 +1,20 @@
 import { Link } from 'react-router-dom'
 import Button from '../components/Button'
-import { useSelector} from 'react-redux'
-import { RootState } from '../app/store'
+import { useSelector, useDispatch } from 'react-redux'
+import { AppDispatch, RootState } from '../app/store'
+import { deleteOrderFirebase} from '../slices/orderSlice'
 const Receipt = () => {
 
 
   const orderItemsDb = useSelector((state: RootState) => state.order.items)
   const totalPrice = useSelector((state: RootState) => state.order.totalSum)
-
+  const dispatch = useDispatch<AppDispatch>();
   const excludedId = "fbSwmKPeCJt1L8ghUm17"
   const filteredOrder = orderItemsDb.filter(item => item.id !== excludedId)
+
+  const handleDeleteOrder = () => {
+    dispatch(deleteOrderFirebase(filteredOrder))
+  }
 
   return (
     <>
@@ -19,7 +24,7 @@ const Receipt = () => {
         {/* Navbar */}
 
         <nav className='flex flex-row justify-between items-center mb-6'>
-        <Link to={"/"}>
+        <Link to={"/"} onClick={handleDeleteOrder}>
         <img src="/assets/logo-2.svg" className='pb-4 w-12 h-12'/>
         </Link>
     </nav>
@@ -55,7 +60,7 @@ const Receipt = () => {
         <h2 className="text-primary-400 text-28 font-bold font-fira-sans">{totalPrice} SEK</h2>
 </article>
 
-        <Link to={"/"}>
+        <Link to={"/"} onClick={handleDeleteOrder}>
             <Button
             variant="dark"
             >

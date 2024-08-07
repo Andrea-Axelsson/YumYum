@@ -1,20 +1,25 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { AppDispatch, RootState } from '../app/store'
 import { fetchMenu } from '../slices/menuSlice'
 import { addToOrder, fetchOrders, removeOrder, addItemToOrder } from '../slices/orderSlice'
 import { DishItem } from '../slices/menuSlice'
 
+
 const Menu: React.FC = () => {
 
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const menuItems = useSelector((state: RootState) => state.menu.items)
   const menuStatus = useSelector((state: RootState) => state.menu.status)
   const orderItemsDb = useSelector((state: RootState) => state.order.items)
   const orderStatus = useSelector((state: RootState) => state.order.status)
   const totalPrice = useSelector((state: RootState) => state.order.totalSum)
+  const totalItems = useSelector((state: RootState) => state.order.totalQuantity)
   const [checkedValue, setcheckedValue] = useState<string[]>([])
+  const [cartIsEmpty, setCartIsEmpty] = useState<boolean>(false)
+  const [isVisible, setIsVisible] = useState<boolean>(false)
 
 console.log("totalPrice", totalPrice)
 
@@ -74,7 +79,26 @@ console.log("totalPrice", totalPrice)
     dispatch(removeOrder(orderItem)); // Spara till Firestore
   }
 
+  
+const handleCartClick = (e:any) => {
+  if (totalItems <= 0){
+    setCartIsEmpty(true)
+    setIsVisible(true)
 
+    setTimeout(() => {
+      setIsVisible(false)
+      setTimeout(() => {
+        setCartIsEmpty(false)
+      }, 500)
+    }, 3000)
+    e.preventDefault()
+
+  }else{
+    navigate('/order')
+  }
+}
+
+console.log("Cart is empty?", cartIsEmpty)
 
   return (
     <>
@@ -94,12 +118,38 @@ console.log("totalPrice", totalPrice)
 
         <nav className='flex flex-row justify-between'>
                 <img src="/assets/logo-2.svg" className='pb-4 w-12 h-12'/>
-                <Link to={"order"}>
-                <div className='bg-secondary-300 w-8 h-8 rounded-md flex justify-center items-center'>
-                <img src="/assets/cart.png" className='w-4 h-4'/>
-                </div>
-                </Link>
                 
+                
+                
+                
+                {cartIsEmpty && (
+                  <div className={`bg-white rounded-md h-6 flex justify-center items-center transition-opacity ${isVisible ? 'animate-fade-in' : 'animate-fade-out'}`}><p className=' text-red-500 text-[12px] font-fira-sans p-2 font-bold'>Lägg till något i kundvagnen</p></div>
+                )}
+
+
+
+{/* {showWarning && (
+        <div
+          className={`bg-white rounded-md h-6 flex justify-center items-center transition-opacity ${
+            isVisible ? 'animate-fade-in' : 'animate-fade-out'
+          }`}
+        >
+          <p className="text-red-500 text-[12px] font-fira-sans p-2 font-bold">
+            Lägg till något i kundvagnen
+          </p>
+        </div>
+      )} */}
+
+                
+                <Link to={"order"} onClick={handleCartClick}>
+                  <div className='bg-secondary-300 w-8 h-8 rounded-md flex justify-center items-center relative'>
+                  {totalItems > 0 && <div className='w-4 h-4 bg-orange-600 rounded-lg flex justify-center items-center absolute bottom-6 left-6'>
+                    <p className='text-[10px] font-bold font-fira-sans text-white'>{totalItems}</p>
+                    </div> }
+                  <img src="/assets/cart.png" className='w-4 h-4'/>
+                  </div>
+                  
+                </Link>
         </nav>
         
 
