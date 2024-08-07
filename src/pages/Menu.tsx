@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
+import { useState, useEffect} from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { AppDispatch, RootState } from '../app/store'
@@ -17,7 +17,7 @@ const Menu: React.FC = () => {
   const orderStatus = useSelector((state: RootState) => state.order.status)
   const totalPrice = useSelector((state: RootState) => state.order.totalSum)
   const totalItems = useSelector((state: RootState) => state.order.totalQuantity)
-  const [checkedValue, setcheckedValue] = useState<string[]>([])
+  /* const [checkedValue, setcheckedValue] = useState<string[]>([]) */
   const [cartIsEmpty, setCartIsEmpty] = useState<boolean>(false)
   const [isVisible, setIsVisible] = useState<boolean>(false)
 
@@ -41,13 +41,13 @@ console.log("totalPrice", totalPrice)
     }
   })
 
-    useEffect(() => {
+    /* useEffect(() => {
 
         if (checkedValue){
             console.log("checkedValue", checkedValue)
         }
 
-    }, [checkedValue])
+    }, [checkedValue]) */
     
 
 /*     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {

@@ -120,7 +120,7 @@ export interface OrderItem {
           if (!querySnapshot.empty) {
             const existingDoc = querySnapshot.docs[0];
             const docRef = doc(db, 'orders', existingDoc.id);
-  
+            
             // Delete the document
             await deleteDoc(docRef);
             deletedItems.push({ ...item, id: existingDoc.id });
